@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مطعم (كافيه) العظماء</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: linear-gradient(to bottom, #000000, #222222);
+      color: white;
+      min-height: 100vh;
+      position: relative;
+    }
+    .restaurant-title {
+      text-align: center;
+      font-size: 3.5rem;
+      margin: 20px 0;
+      font-weight: 900;
+      color: #FFD700;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+      letter-spacing: 2px;
+      padding: 0 15px;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px #FFD700, 0 0 10px #FFD700, 0 0 15px #FFD700, 0 0 20px #5C0000;
+      }
+      to {
+        text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700, 0 0 30px #FFD700, 0 0 40px #5C0000;
+      }
+    }
+    .banner {
+      background: linear-gradient(to right, #5C0000, #8B0000, #5C0000);
+      color: #FFF;
+      padding: 20px;
+      overflow: hidden;
+      white-space: nowrap;
+      font-weight: bold;
+      font-size: 1.8rem;
+      animation: scroll 15s linear infinite;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      margin: 10px 0;
+      width: 100%;
+      position: relative;
+    }
+    .banner2 {
+      background: linear-gradient(to right, #8B0000, #5C0000, #8B0000);
+      color: #FFF;
+      padding: 20px;
+      overflow: hidden;
+      white-space: nowrap;
+      font-weight: bold;
+      font-size: 1.8rem;
+      animation: scroll 20s linear infinite;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      margin: 10px 0;
+      width: 100%;
+      position: relative;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .menu-container, .admin-panel, .report-panel {
+      padding: 20px;
+      transition: all 0.5s ease-in-out;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .menu-item {
+      background: rgba(91, 0, 0, 0.7);
+      padding: 15px;
+      border: 1px solid #B87333;
+      border-radius: 15px;
+      animation: fadeIn 1s ease-in-out, flyIn 0.8s ease-out;
+      width: 360px;
+      max-width: 95%;
+      flex: 0 0 360px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      transform-style: preserve-3d;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes flyIn {
+      from { transform: translateY(100px) rotateX(45deg); opacity: 0; }
+      to { transform: translateY(0) rotateX(0); opacity: 1; }
+    }
+    .menu-item:hover {
+      transform: rotateY(10deg) scale(1.03);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .menu-item:focus-within {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+    button {
+      background: #B87333;
+      color: #FFF;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 5px;
+      font-weight: bold;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(90deg, #B87333, #8B4513, #B87333);
+      background-size: 200% auto;
+    }
+    button:hover {
+      background: #5C0000;
+      color: white;
+      transform: translateY(-2px);
+      background-position: right center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    button:active {
+      transform: translateY(2px);
+    }
+    .pulse {
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 69, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); }
+    }
+    .admin-icons {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+    .admin-icon, .call-icon, .complaint-icon {
+      cursor: pointer;
+      background: rgba(91, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .admin-icon:hover, .call-icon:hover, .complaint-icon:hover {
+      background: rgba(91, 0, 0, 0.9);
+      transform: scale(1.1);
+    }
+    .admin-icon i, .call-icon i, .complaint-icon i {
+      font-size: 20px;
+      color: white;
+    }
+    .call-icon {
+      background: #FFD700;
+      animation: pulse 1.5s infinite;
+    }
+    .call-icon i {
+      color: #5C0000;
+    }
+    .complaint-icon {
+      background: #FF4500;
+      animation: pulse 1.5s infinite;
+    }
+    .admin-login-box, .call-waiter-form, .complaint-form {
+      display: none;
+      position: fixed;
+      top: 60px;
+      left: 10px;
+      background: rgba(91, 0, 0, 0.9);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #B87333;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      z-index: 1000;
+      width: 300px;
+      max-width: 90%;
+    }
+    input, textarea {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 10px;
+      border: 1px solid #B87333;
+      background: rgba(255,255,255,0.9);
+      width: 90%;
+      transition: all 0.3s ease;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+      transform: scale(1.02);
+    }
+    .admin-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: rgba(91, 0, 0, 0.7);
+    }
+    .report-table th, .report-table td {
+      border: 1px solid #B87333;
+      padding: 8px;
+      text-align: center;
+    }
+    .report-table th {
+      background-color: #5C0000;
+    }
+    .report-panel {
+      display: none;
+    }
+    .user-notification {
+      background: rgba(91, 0, 0, 0.8);
+      padding: 15px;
+      margin: 10px auto;
+      border-radius: 10px;
+      border: 1px solid #B87333;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease;
+    }
+    .order-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+      background: rgba(91, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .order-col {
+      flex: 1;
+      min-width: 150px;
+    }
+    .waiter-calls {
+      margin-top: 20px;
+      background: rgba(91, 0, 0, 0.5);
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .call-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #B87333;
+    }
+    .menu-item img {
+      width: 100%;
+      border-radius: 10px;
+      transition: all 0.5s ease;
+      filter: blur(2px);
+      animation: unblur 1s ease forwards;
+      position: relative;
+    }
+    @keyframes unblur {
+      to { filter: blur(0); }
+    }
+    .menu-item img::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      animation: borderGlow 2s infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes borderGlow {
+      0% { border-color: rgba(255, 215, 0, 0.3); }
+      100% { border-color: rgba(255, 215, 0, 0.8); }
+    }
+    .menu-item img:hover {
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+      transform: translateY(-5px);
+    }
+    h2, h3 {
+      animation: shake 0.5s ease infinite alternate;
+      transform-origin: center;
+    }
+    @keyframes shake {
+      from { transform: translateX(-3px) rotate(-1deg); }
+      to { transform: translateX(3px) rotate(1deg); }
+    }
+    .typewriter {
+      overflow: hidden;
+      white-space: nowrap;
+      animation: typing 3.5s steps(40, end);
+    }
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+    @media (max-width: 768px) {
+      .restaurant-title {
+        font-size: 2.5rem;
+        margin-top: 50px;
+      }
+      .banner, .banner2 {
+        font-size: 1.4rem;
+        padding: 15px;
+      }
+      .menu-item {
+        width: 100%;
+      }
+      .admin-icons {
+        flex-direction: row;
+        top: 5px;
+        left: 5px;
+      }
+      .admin-login-box, .call-waiter-form, .complaint-form {
+        top: 50px;
+        left: 5px;
+        width: 95%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-icons">
+    <div class="admin-icon" onclick="toggleLoginBox()">
+      <i class="fas fa-user-shield"></i>
+    </div>
+    <div class="call-icon" id="callWaiterBtn" onclick="toggleCallWaiterForm()">
+      <i class="fas fa-bell"></i>
+    </div>
+    <div class="complaint-icon" id="complaintBtn" onclick="toggleComplaintForm()">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+  </div>
+
+  <div class="admin-login-box" id="loginBox">
+    <input type="text" id="adminUser" placeholder="اسم المستخدم">
+    <input type="password" id="adminPass" placeholder="كلمة السر">
+    <button onclick="loginAdmin()">دخول</button>
+  </div>
+
+  <div class="call-waiter-form" id="callWaiterForm">
+    <input type="number" id="callTableNumber" placeholder="رقم الطاولة">
+    <textarea id="callMessage" placeholder="الرسالة (اختياري)"></textarea>
+    <button onclick="callWaiter()">إرسال</button>
+    <button onclick="toggleCallWaiterForm()">إلغاء</button>
+  </div>
+
+  <div class="complaint-form" id="complaintForm">
+    <input type="number" id="complaintTable" placeholder="رقم الطاولة">
+    <textarea id="complaintText" placeholder="تفاصيل الشكوى"></textarea>
+    <button onclick="sendComplaint()">إرسال</button>
+    <button onclick="toggleComplaintForm()">إلغاء</button>
+  </div>
+
+  <div class="restaurant-title">مطعم (كافيه) العظماء</div>
+  <div class="banner" id="announcement">مرحباً بكم في مطعم (كافيه) العظماء! &nbsp;&nbsp;&nbsp; 
+    نقدم لكم أشهى المأكولات والمشروبات &nbsp;&nbsp;&nbsp; 
+    عروض خاصة كل يوم &nbsp;&nbsp;&nbsp; 
+    خدمة مميزة وضيافة راقية &nbsp;&nbsp;&nbsp; 
+    جودة عالية وأسعار مناسبة &nbsp;&nbsp;&nbsp; 
+    فريق عمل محترف لخدمتكم</div>
+  
+  <div class="banner2" id="announcement2">استمتعوا بأفضل العروض لهذا الأسبوع! &nbsp;&nbsp;&nbsp; 
+    خصم 20% على جميع المشروبات &nbsp;&nbsp;&nbsp; 
+    وجبة عائلية بخصم 30% &nbsp;&nbsp;&nbsp; 
+    سهرات خاصة مع موسيقى هادئة &nbsp;&nbsp;&nbsp; 
+    حفلات أعياد الميلاد بأسعار مميزة &nbsp;&nbsp;&nbsp; 
+    استمتع بتجربة فريدة معنا</div>
+
+  <div id="userOrders" class="user-notification"></div>
+
+  <div class="menu-container" id="menu"></div>
+
+  <div class="admin-panel" id="adminPanel" style="display:none">
+    <h2>لوحة التحكم</h2>
+    <button onclick="logoutAdmin()">خروج</button>
+    <button onclick="showReportPanel()">التقارير</button><br>
+    <h3>إضافة صنف جديد:</h3>
+    <input type="text" id="itemName" placeholder="اسم الصنف">
+    <input type="text" id="itemDesc" placeholder="مواصفات الصنف">
+    <input type="number" id="itemPrice" placeholder="السعر">
+    <input type="file" id="itemImage">
+    <button onclick="addItem()">إضافة</button>
+    
+    <h3>نصوص الإعلانات:</h3>
+    <input type="text" id="adText1" placeholder="نص الإعلان الأول"><button onclick="updateAd(1)">تحديث الإعلان الأول</button><br>
+    <input type="text" id="adText2" placeholder="نص الإعلان الثاني"><button onclick="updateAd(2)">تحديث الإعلان الثاني</button>
+    
+    <h3>الطلبات الجديدة:</h3>
+    <div id="orders"></div>
+    
+    <div class="waiter-calls">
+      <h3>استدعاءات النادل:</h3>
+      <div id="waiterCalls"></div>
+    </div>
+  </div>
+
+  <div class="report-panel" id="reportPanel">
+    <h2>لوحة التقارير</h2>
+    <button onclick="hideReportPanel()">العودة إلى لوحة التحكم</button><br>
+    <button onclick="showReport('daily')">عرض تقرير يومي</button>
+    <button onclick="showReport('weekly')">عرض تقرير أسبوعي</button>
+    <button onclick="showReport('monthly')">عرض تقرير شهري</button>
+    <button onclick="showReport('yearly')">عرض تقرير سنوي</button><br>
+    <button onclick="clearReport('daily')">مسح التقرير اليومي</button>
+    <button onclick="clearReport('weekly')">مسح التقرير الأسبوعي</button>
+    <button onclick="clearReport('monthly')">مسح التقرير الشهري</button>
+    <button onclick="clearReport('yearly')">مسح التقرير السنوي</button>
+    <div id="reportSection"></div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDz46WQo47UFyCRiiE1bMSEWpz2qOdUBGA",
+      authDomain: "restaurant-2c6e5.firebaseapp.com",
+      databaseURL: "https://restaurant-2c6e5-default-rtdb.firebaseio.com",
+      projectId: "restaurant-2c6e5",
+      storageBucket: "restaurant-2c6e5.appspot.com",
+      messagingSenderId: "1061534791518",
+      appId: "1:1061534791518:web:577684ba77bce8ea3341cf"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const ADMIN_USERNAME = "admin";
+    const ADMIN_PASSWORD = "1234";
+    let isAdmin = false;
+
+    function toggleLoginBox() {
+      const box = document.getElementById('loginBox');
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+      // إخفاء النماذج الأخرى عند فتح هذا النموذج
+      document.getElementById('callWaiterForm').style.display = 'none';
+      document.getElementById('complaintForm').style.display = 'none';
+    }
+
+    function loginAdmin() {
+      const user = document.getElementById('adminUser').value;
+      const pass = document.getElementById('adminPass').value;
+      if (user === ADMIN_USERNAME && pass === ADMIN_PASSWORD) {
+        isAdmin = true;
+        document.getElementById('adminPanel').style.display = 'block';
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('userOrders').style.display = 'none';
+        document.getElementById('callWaiterBtn').style.display = 'none';
+        document.getElementById('complaintBtn').style.display = 'none';
+        renderMenu();
+        listenWaiterCalls();
+      } else {
+        alert("بيانات دخول غير صحيحة");
+      }
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      document.getElementById('adminPanel').style.display = 'none';
+      document.getElementById('reportPanel').style.display = 'none';
+      document.getElementById('userOrders').style.display = 'block';
+      document.getElementById('callWaiterBtn').style.display = 'flex';
+      document.getElementById('complaintBtn').style.display = 'flex';
+      renderMenu();
+    }
+
+    function showReportPanel() {
+      document.getElementById('adminPanel').style.display = 'none';
+      document.getElementById('reportPanel').style.display = 'block';
+    }
+
+    function hideReportPanel() {
+      document.getElementById('reportPanel').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+    }
+
+    function renderMenu() {
+      db.ref("menu").on("value", snapshot => {
+        const menu = document.getElementById("menu");
+        menu.innerHTML = "";
+        snapshot.forEach(itemSnap => {
+          const item = itemSnap.val();
+          const id = itemSnap.key;
+          
+          if (isAdmin) {
+            menu.innerHTML += `
+              <div class="menu-item">
+                <h3>${item.name} - ${item.price}ج</h3>
+                <p>${item.desc}</p>
+                <img src="${item.img}" style="width:100%; border-radius:10px">
+                <div class="admin-actions">
+                  <button onclick="editItem('${id}', '${item.name}', '${item.desc}', ${item.price})">تعديل</button>
+                  <button onclick="deleteItem('${id}')">حذف</button>
+                </div>
+              </div>`;
+          } else {
+            menu.innerHTML += `
+              <div class="menu-item">
+                <h3>${item.name} - ${item.price}ج</h3>
+                <p>${item.desc}</p>
+                <img src="${item.img}" style="width:100%; border-radius:10px">
+                <input type="number" id="qty_${id}" placeholder="الكمية">
+                <input type="text" id="note_${id}" placeholder="ملاحظات">
+                <input type="text" id="table_${id}" placeholder="رقم الطاولة">
+                <button onclick="sendOrderPerItem('${id}', '${item.name}', ${item.price})">تنفيذ الطلب</button>
+              </div>`;
+          }
+        });
+      });
+    }
+
+    function addItem() {
+      const name = document.getElementById("itemName").value;
+      const desc = document.getElementById("itemDesc").value;
+      const price = document.getElementById("itemPrice").value;
+      const file = document.getElementById("itemImage").files[0];
+      if (!file) return alert("يرجى اختيار صورة");
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imgData = e.target.result;
+        const newItemRef = db.ref("menu").push();
+        newItemRef.set({ name, desc, price, img: imgData });
+        alert("تم إضافة الصنف بنجاح");
+        document.getElementById("itemName").value = "";
+        document.getElementById("itemDesc").value = "";
+        document.getElementById("itemPrice").value = "";
+        document.getElementById("itemImage").value = "";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function editItem(id, currentName, currentDesc, currentPrice) {
+      const newName = prompt("اسم الصنف الجديد:", currentName);
+      if (newName === null) return;
+      
+      const newDesc = prompt("مواصفات الصنف الجديدة:", currentDesc);
+      if (newDesc === null) return;
+      
+      const newPrice = prompt("السعر الجديد:", currentPrice);
+      if (newPrice === null) return;
+      
+      db.ref(`menu/${id}`).update({
+        name: newName,
+        desc: newDesc,
+        price: newPrice
+      });
+      alert("تم تعديل الصنف بنجاح");
+    }
+
+    function deleteItem(id) {
+      if (confirm("هل أنت متأكد من حذف هذا الصنف؟")) {
+        db.ref(`menu/${id}`).remove();
+        alert("تم حذف الصنف بنجاح");
+      }
+    }
+
+    function sendOrderPerItem(id, itemName, itemPrice) {
+      const qty = document.getElementById(`qty_${id}`).value;
+      const note = document.getElementById(`note_${id}`).value;
+      const table = document.getElementById(`table_${id}`).value;
+      if (!qty || !table) return alert("يرجى إدخال الكمية ورقم الطاولة");
+      
+      const totalPrice = qty * itemPrice;
+      const userId = localStorage.getItem("uid") || (Date.now() + Math.random()).toString();
+      localStorage.setItem("uid", userId);
+      
+      db.ref("orders").push({
+        item: itemName,
+        quantity: qty,
+        price: itemPrice,
+        total: totalPrice,
+        notes: note,
+        table,
+        timestamp: Date.now(),
+        status: "new",
+        user: userId
+      });
+      
+      if (!isAdmin) {
+        document.getElementById('userOrders').innerHTML = `
+          <div class="user-notification">
+            <strong>طلبك قيد التنفيذ:</strong><br>
+            طاولة ${table}, ${itemName}<br>
+            الكمية: ${qty}, الإجمالي: ${totalPrice} ج<br>
+            ${note || 'لا توجد ملاحظات'}
+          </div>`;
+      }
+    }
+
+    function updateAd(adNumber) {
+      const adText = document.getElementById(`adText${adNumber}`).value;
+      db.ref(`announcement${adNumber}`).set(adText);
+      alert(`تم تحديث الإعلان ${adNumber} بنجاح`);
+    }
+
+    function watchAds() {
+      db.ref("announcement1").on("value", snapshot => {
+        if (snapshot.exists()) {
+          const announcement = document.getElementById("announcement");
+          announcement.innerText = snapshot.val();
+          document.getElementById("adText1").value = snapshot.val();
+        }
+      });
+      
+      db.ref("announcement2").on("value", snapshot => {
+        if (snapshot.exists()) {
+          const announcement = document.getElementById("announcement2");
+          announcement.innerText = snapshot.val();
+          document.getElementById("adText2").value = snapshot.val();
+        }
+      });
+    }
+
+    function listenOrders() {
+      db.ref("orders").on("value", snapshot => {
+        const ordersDiv = document.getElementById("orders");
+        const userId = localStorage.getItem("uid") || (Date.now() + Math.random()).toString();
+        localStorage.setItem("uid", userId);
+        ordersDiv.innerHTML = "";
+
+        snapshot.forEach(orderSnap => {
+          const id = orderSnap.key;
+          const order = orderSnap.val();
+          if (order.status === "new") {
+            ordersDiv.innerHTML += `
+              <div class="order-row">
+                <div class="order-col"><strong>طاولة:</strong> ${order.table}</div>
+                <div class="order-col"><strong>الصنف:</strong> ${order.item || '---'}</div>
+                <div class="order-col"><strong>الكمية:</strong> ${order.quantity || '---'}</div>
+                <div class="order-col"><strong>السعر:</strong> ${order.price || '---'} ج</div>
+                <div class="order-col"><strong>الإجمالي:</strong> ${order.total || '---'} ج</div>
+                <div class="order-col"><strong>ملاحظات:</strong> ${order.notes || '---'}</div>
+                <div class="order-col">
+                  <button onclick="markOrder('${id}', 'done')">تم التنفيذ</button>
+                  <button onclick="markOrder('${id}', 'cancelled')">إلغاء</button>
+                </div>
+              </div>`;
+          }
+          
+          // إخفاء إشعار المستخدم إذا تم تنفيذ طلبه
+          if (order.user === userId && order.status === "done") {
+            document.getElementById('userOrders').style.opacity = '0';
+            setTimeout(() => {
+              document.getElementById('userOrders').innerHTML = '';
+              document.getElementById('userOrders').style.opacity = '1';
+            }, 500);
+          }
+        });
+      });
+    }
+
+    function markOrder(id, status) {
+      db.ref(`orders/${id}`).update({ status });
+      if (status === "done") {
+        db.ref(`orders/${id}`).once('value', snap => {
+          const order = snap.val();
+          if (order) {
+            db.ref(`reports/daily`).push({
+              item: order.item,
+              quantity: order.quantity,
+              price: order.price,
+              total: order.total,
+              table: order.table,
+              timestamp: order.timestamp
+            });
+          }
+        });
+      }
+    }
+
+    function showReport(type) {
+      db.ref(`reports/${type}`).once("value", snap => {
+        const div = document.getElementById("reportSection");
+        div.innerHTML = `<h4>تقرير ${type}</h4>`;
+        
+        if (!snap.exists() || snap.numChildren() === 0) {
+          div.innerHTML += "<p>لا توجد بيانات لهذا التقرير</p>";
+          return;
+        }
+        
+        let items = {};
+        let totalQuantity = 0;
+        let totalRevenue = 0;
+        
+        snap.forEach(child => {
+          const order = child.val();
+          if (order && order.item) {
+            if (!items[order.item]) {
+              items[order.item] = {
+                quantity: 0,
+                total: 0,
+                price: order.price
+              };
+            }
+            items[order.item].quantity += parseInt(order.quantity);
+            items[order.item].total += parseFloat(order.total);
+            totalQuantity += parseInt(order.quantity);
+            totalRevenue += parseFloat(order.total);
+          }
+        });
+        
+        let tableHTML = `
+          <table class="report-table">
+            <tr>
+              <th>الصنف</th>
+              <th>الكمية</th>
+              <th>السعر</th>
+              <th>الإجمالي</th>
+            </tr>`;
+        
+        for (const item in items) {
+          tableHTML += `
+            <tr>
+              <td>${item}</td>
+              <td>${items[item].quantity}</td>
+              <td>${items[item].price} ج</td>
+              <td>${items[item].total.toFixed(2)} ج</td>
+            </tr>`;
+        }
+        
+        tableHTML += `
+            <tr>
+              <td colspan="4"><strong>إجمالي التقرير</strong></td>
+            </tr>
+            <tr>
+              <td colspan="1">إجمالي الكمية</td>
+              <td>${totalQuantity}</td>
+              <td colspan="1">إجمالي المبيعات</td>
+              <td>${totalRevenue.toFixed(2)} ج</td>
+            </tr>
+          </table>`;
+        
+        div.innerHTML += tableHTML;
+      });
+    }
+
+    function clearReport(type) {
+      if (confirm(`هل أنت متأكد من مسح التقرير ${type}؟`)) {
+        db.ref(`reports/${type}`).remove();
+        document.getElementById("reportSection").innerHTML = `<p>تم مسح التقرير ${type}</p>`;
+      }
+    }
+
+    function toggleCallWaiterForm() {
+      const form = document.getElementById('callWaiterForm');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+      // إخفاء النماذج الأخرى عند فتح هذا النموذج
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('complaintForm').style.display = 'none';
+    }
+
+    function callWaiter() {
+      const table = document.getElementById('callTableNumber').value;
+      const message = document.getElementById('callMessage').value;
+      
+      if (!table) {
+        alert("يرجى إدخال رقم الطاولة");
+        return;
+      }
+      
+      db.ref("waiterCalls").push({
+        table,
+        message: message || "طلب استدعاء النادل",
+        timestamp: Date.now(),
+        status: "pending"
+      });
+      
+      alert("تم إرسال استدعاء النادل");
+      toggleCallWaiterForm();
+      document.getElementById('callTableNumber').value = "";
+      document.getElementById('callMessage').value = "";
+    }
+
+    function listenWaiterCalls() {
+      db.ref("waiterCalls").on("value", snapshot => {
+        const callsDiv = document.getElementById("waiterCalls");
+        callsDiv.innerHTML = "";
+        
+        snapshot.forEach(callSnap => {
+          const id = callSnap.key;
+          const call = callSnap.val();
+          
+          if (call.status === "pending") {
+            callsDiv.innerHTML += `
+              <div class="call-item">
+                <div><strong>طاولة:</strong> ${call.table}</div>
+                <div><strong>الرسالة:</strong> ${call.message}</div>
+                <div><strong>الوقت:</strong> ${new Date(call.timestamp).toLocaleTimeString()}</div>
+                <button onclick="markCallDone('${id}')">تمت المشاهدة</button>
+              </div>`;
+          }
+        });
+      });
+    }
+
+    function markCallDone(id) {
+      db.ref(`waiterCalls/${id}`).update({ status: "done" });
+    }
+
+    function toggleComplaintForm() {
+      const form = document.getElementById('complaintForm');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+      // إخفاء النماذج الأخرى عند فتح هذا النموذج
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('callWaiterForm').style.display = 'none';
+    }
+
+    function sendComplaint() {
+      const table = document.getElementById('complaintTable').value;
+      const text = document.getElementById('complaintText').value;
+      
+      if (!table || !text) {
+        alert("يرجى إدخال رقم الطاولة وتفاصيل الشكوى");
+        return;
+      }
+      
+      db.ref("complaints").push({
+        table,
+        text,
+        timestamp: Date.now(),
+        status: "new"
+      });
+      
+      alert("تم إرسال الشكوى بنجاح");
+      toggleComplaintForm();
+      document.getElementById('complaintTable').value = "";
+      document.getElementById('complaintText').value = "";
+    }
+
+    // Initialize
+    renderMenu();
+    watchAds();
+    listenOrders();
+    
+    // إظهار أيقونات الشكوى واستدعاء النادل للمستخدمين العاديين فقط
+    if (!isAdmin) {
+      document.getElementById('callWaiterBtn').style.display = 'flex';
+      document.getElementById('complaintBtn').style.display = 'flex';
+    } else {
+      document.getElementById('callWaiterBtn').style.display = 'none';
+      document.getElementById('complaintBtn').style.display = 'none';
+    }
+
+    // إضافة تأثير اهتزاز للعناوين عند التمرير
+    window.addEventListener('scroll', function() {
+      const headings = document.querySelectorAll('h2, h3');
+      headings.forEach(heading => {
+        const headingPosition = heading.getBoundingClientRect().top;
+        const screenPosition = window.innerHeight / 1.3;
+        
+        if (headingPosition < screenPosition) {
+          heading.style.animation = 'shake 0.5s ease infinite alternate';
+        } else {
+          heading.style.animation = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
