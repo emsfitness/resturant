@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>محمصه المكسيكي</title>
+  <title>مطعم (كافيه) العظماء</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
@@ -368,21 +368,21 @@
   </div>
 
   <div class="call-waiter-form" id="callWaiterForm">
-    <input type="number" id="callTableNumber" placeholder="رقم الهاتف">
+    <input type="number" id="callTableNumber" placeholder="رقم الطاولة">
     <textarea id="callMessage" placeholder="الرسالة (اختياري)"></textarea>
     <button onclick="callWaiter()">إرسال</button>
     <button onclick="toggleCallWaiterForm()">إلغاء</button>
   </div>
 
   <div class="complaint-form" id="complaintForm">
-    <input type="number" id="complaintTable" placeholder="رقم الهاتف">
+    <input type="number" id="complaintTable" placeholder="رقم الطاولة">
     <textarea id="complaintText" placeholder="تفاصيل الشكوى"></textarea>
     <button onclick="sendComplaint()">إرسال</button>
     <button onclick="toggleComplaintForm()">إلغاء</button>
   </div>
 
-  <div class="restaurant-title">محمصه المكسيكي</div>
-  <div class="banner" id="announcement">مرحباً بكم محمصه المكسيكي! &nbsp;&nbsp;&nbsp; 
+  <div class="restaurant-title">مطعم (كافيه) العظماء</div>
+  <div class="banner" id="announcement">مرحباً بكم في مطعم (كافيه) العظماء! &nbsp;&nbsp;&nbsp; 
     نقدم لكم أشهى المأكولات والمشروبات &nbsp;&nbsp;&nbsp; 
     عروض خاصة كل يوم &nbsp;&nbsp;&nbsp; 
     خدمة مميزة وضيافة راقية &nbsp;&nbsp;&nbsp; 
@@ -525,15 +525,9 @@
                 <h3>${item.name} - ${item.price}ج</h3>
                 <p>${item.desc}</p>
                 <img src="${item.img}" style="width:100%; border-radius:10px">
-                <select id="qty_${id}"><option value="نصف ثمن">نصف ثمن</option>
-<option value="ثمن">ثمن</option>
-<option value="ربع">ربع</option>
-<option value="نصف كيلو">نصف كيلو</option>
-<option value="كيلو">كيلو</option>
-<option value="2 كيلو">2 كيلو</option>
-<option value="5 كيلو">5 كيلو</option></select>
-                <input type="text" id="note_${id}" placeholder="العنوان">
-                <input type="text" id="table_${id}" placeholder="رقم الهاتف">
+                <input type="number" id="qty_${id}" placeholder="الكمية">
+                <input type="text" id="note_${id}" placeholder="ملاحظات">
+                <input type="text" id="table_${id}" placeholder="رقم الطاولة">
                 <button onclick="sendOrderPerItem('${id}', '${item.name}', ${item.price})">تنفيذ الطلب</button>
               </div>`;
           }
@@ -591,7 +585,7 @@
       const qty = document.getElementById(`qty_${id}`).value;
       const note = document.getElementById(`note_${id}`).value;
       const table = document.getElementById(`table_${id}`).value;
-      if (!qty || !table) return alert("يرجى إدخال الكمية ورقم الهاتف");
+      if (!qty || !table) return alert("يرجى إدخال الكمية ورقم الطاولة");
       
       const totalPrice = qty * itemPrice;
       const userId = localStorage.getItem("uid") || (Date.now() + Math.random()).toString();
@@ -602,7 +596,7 @@
         quantity: qty,
         price: itemPrice,
         total: totalPrice,
-        address: note,
+        notes: note,
         table,
         timestamp: Date.now(),
         status: "new",
@@ -615,7 +609,7 @@
             <strong>طلبك قيد التنفيذ:</strong><br>
             طاولة ${table}, ${itemName}<br>
             الكمية: ${qty}, الإجمالي: ${totalPrice} ج<br>
-            ${note || 'لا توجد العنوان'}
+            ${note || 'لا توجد ملاحظات'}
           </div>`;
       }
     }
@@ -662,7 +656,7 @@
                 <div class="order-col"><strong>الكمية:</strong> ${order.quantity || '---'}</div>
                 <div class="order-col"><strong>السعر:</strong> ${order.price || '---'} ج</div>
                 <div class="order-col"><strong>الإجمالي:</strong> ${order.total || '---'} ج</div>
-                <div class="order-col"><strong>العنوان:</strong> ${order.address || '---'}</div>
+                <div class="order-col"><strong>ملاحظات:</strong> ${order.notes || '---'}</div>
                 <div class="order-col">
                   <button onclick="markOrder('${id}', 'done')">تم التنفيذ</button>
                   <button onclick="markOrder('${id}', 'cancelled')">إلغاء</button>
@@ -787,7 +781,7 @@
       const message = document.getElementById('callMessage').value;
       
       if (!table) {
-        alert("يرجى إدخال رقم الهاتف");
+        alert("يرجى إدخال رقم الطاولة");
         return;
       }
       
@@ -843,7 +837,7 @@
       const text = document.getElementById('complaintText').value;
       
       if (!table || !text) {
-        alert("يرجى إدخال رقم الهاتف وتفاصيل الشكوى");
+        alert("يرجى إدخال رقم الطاولة وتفاصيل الشكوى");
         return;
       }
       
